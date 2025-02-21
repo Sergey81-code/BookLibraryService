@@ -1,0 +1,17 @@
+services:
+  db:
+    container_name: "book_db"
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+     - "5431:5432"
+    networks:
+      - custom
+
+networks:
+  custom:
+    driver: bridge
