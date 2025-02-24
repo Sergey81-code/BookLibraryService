@@ -9,10 +9,12 @@ dependencies = [
     "asyncpg>=0.30.0",
     "envparse>=0.2.0",
     "fastapi>=0.115.8",
+    "psycopg2>=2.9.10",
     "pydantic-settings>=2.8.0",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
     "python-jose>=3.3.0",
     "sqlalchemy>=2.0.38",
+    "uuid7>=0.1.0",
     "uvicorn>=0.34.0",
 ]
