@@ -14,7 +14,7 @@ class BookService:
     def __init__(self, repo: BookRepository):
         self.repo = repo
 
-    async def _get_only_existing_authors(self, authors: list[Author], session: AsyncSession) -> list:
+    async def _get_only_existing_authors(self, authors: list[Author], session: AsyncSession) -> list[Author] | list:
         existing_authors = await auth_repo.get_all(session)
         existing_authors_ids = [author.id for author in existing_authors]
         return [author for author in authors if author.id in existing_authors_ids]
@@ -27,11 +27,12 @@ class BookService:
 
 
     async def create_book_orm_obj(self, body_with_book_info: BookCreate, session: AsyncSession) -> Book:
-        body_with_book_info.authors = await self._get_only_existing_authors(body_with_book_info.authors, session)
+        if body_with_book_info.authors:
+            body_with_book_info.authors = await self._get_only_existing_authors(body_with_book_info.authors, session)
         return Book(**body_with_book_info.model_dump(exclude_none=True))
 
 
-    async def create_book_in_database(self, book: Book, session: AsyncSession):
+    async def create_book_in_database(self, book: Book, session: AsyncSession) -> Book:
         try:
             if await self._check_book_exist(book.name, session):
                 AppExceptions.bad_request_exception(f"Book with name {book.name} already exists.")
@@ -53,11 +54,8 @@ class BookService:
     
     async def update_authors_into_book(self, book: Book, authors: list[Author], session: AsyncSession) -> Book:
         authors = await self._get_only_existing_authors(authors)
-        authors_from_db = []
-        for author in authors:
-            author_obj = await auth_repo.get_by_id(author.id)
-            authors_from_db.append(author_obj)
-        
+        author_ids = [author.id for author in authors]
+        authors_from_db = await auth_repo.get_all(session, [lambda model: model.id.in_(author_ids)])
         authors_to_add = set(authors_from_db) - book.authors
         authors_to_remove = book.authors - set(authors_from_db)
 
@@ -66,8 +64,6 @@ class BookService:
 
     async def update_book(self, book: Book, body_with_updated_book_params: BookUpdate, session: AsyncSession) -> Book:
         try:
-            if not await self._check_book_exist(book.name, session):
-                AppExceptions.not_found_exception(f"Book with id {book.id} not found")
             if book.name != body_with_updated_book_params.name and await self._check_book_exist(body_with_updated_book_params.name, session):
                 AppExceptions.bad_request_exception(f"Book name {body_with_updated_book_params.name} already taken")
             updated_book_params = body_with_updated_book_params.model_dump(exclude_none=True)

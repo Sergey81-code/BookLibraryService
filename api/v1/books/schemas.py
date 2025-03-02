@@ -9,7 +9,7 @@ class TundeModel(BaseModel):
         from_attributes = True
 
 class Author(BaseModel):
-    name: str
+    id: UUID
 
 class ShowBook(TundeModel):
     id: UUID
@@ -29,7 +29,7 @@ class BookCreate(BaseModel):
     year: int
     totalAmount: int = Field(gt=0, description="Total amount must be greater than 0")
     borrowedAmount: int = Field(ge=0, description="Borrowed amount must be non-negative")
-    authors: list[Author] | list = []
+    authors: list[Author] = []
 
     @model_validator(mode="before")
     def capitalize_name(cls, values):
@@ -39,8 +39,8 @@ class BookCreate(BaseModel):
         
 
     @field_validator("borrowedAmount")
-    def validate_borrowed_amount(cls, value, values):
-        total_amount = values.data.get('totalAmount')
+    def validate_borrowed_amount(cls, value, info):
+        total_amount = info.data.get('totalAmount')
         if total_amount is not None and value > total_amount:
             AppExceptions.bad_request_exception("borrowedAmount cannot be greater than totalAmount")
         return value

@@ -13,7 +13,6 @@ class BookRepository(BaseRepository[Book]):
     async def get_book_by_name(self, session: AsyncSession, name: str) -> Book | None:
         result = await session.execute(select(self.model).where(self.model.name == name).limit(1))
         book_row = result.first()
-        print(book_row)
         return book_row[0] if book_row else None
     
     async def update_authors_into_book(

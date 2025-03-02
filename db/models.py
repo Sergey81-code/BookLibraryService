@@ -68,7 +68,8 @@ class Author(Base):
     books: Mapped[list[Book]] = relationship(
         Book,
         secondary="book_authors",
-        back_populates="authors"
+        back_populates="authors",
+        lazy="selectin"
     )
 
 

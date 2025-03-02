@@ -2,6 +2,8 @@ from typing import Any, Callable, Generic, Type, TypeVar
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -38,14 +40,14 @@ class BaseRepository(Generic[T]):
     async def get_all(
             self,
             session: AsyncSession,
-            object_filters: list[Callable[[Any], bool]] | None = None
+            object_filters: list[Callable[[Type[DeclarativeBase]], BinaryExpression]] | None = None
         ):
-        results = await session.execute(select(self.model))
-        objects = results.scalars().all()
+        stmt = select(self.model)
         if object_filters:
             for object_filter in object_filters:
-                objects = list(filter(object_filter, objects))
-        return objects
+                stmt = stmt.where(object_filter(self.model))
+        results = await session.execute(stmt)
+        return results.scalars().all()
     
     async def update_obj(self, session: AsyncSession, obj: T, updated_params: dict[str, Any]) -> T:
         query = (

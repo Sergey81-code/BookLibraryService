@@ -1,10 +1,14 @@
 from fastapi import FastAPI
-from api.v1.books.handlers import book_router
 import uvicorn
 
-app = FastAPI(title="Book Library")
+from api.core.config import get_settings
+from api.routers import router
 
-app.include_router(book_router, prefix="/books", tags=["books"])
+settings = get_settings()
+
+app = FastAPI(title=settings.PROJECT_NAME)
+
+app.include_router(router)
 
 @app.get('/')
 async def ping():
@@ -12,4 +16,4 @@ async def ping():
 
 if __name__ == "__main__":
     # run app on the host and port
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=settings.APP_PORT, reload=True)
