@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api.books.handlers import book_router
+from api.v1.books.handlers import book_router
 import uvicorn
 
 app = FastAPI(title="Book Library")
