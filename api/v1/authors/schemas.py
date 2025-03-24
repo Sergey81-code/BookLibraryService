@@ -13,6 +13,15 @@ class TundeModel(BaseModel):
 class Book(BaseModel):
     id: UUID
 
+class ShowBook(TundeModel):
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    url: Optional[str] = None
+    year: int
+    totalAmount: int
+    borrowedAmount: int
+
 
 class ShowAuthor(TundeModel):
     id: UUID
@@ -20,7 +29,7 @@ class ShowAuthor(TundeModel):
     birthday: Optional[datetime.date] = None
     deathday: Optional[datetime.date] = None
 
-    books: list[Book] = []
+    books: list[ShowBook] = []
 
 
 class AuthorCreate(BaseModel):
@@ -50,6 +59,12 @@ class AuthorUpdate(BaseModel):
     deathday: Optional[datetime.date] = None
 
     books: list[Book] = []
+
+    @model_validator(mode="before")
+    def capitalize_name(cls, values):
+        if "name" in values:
+            values['name'] = values['name'].capitalize()
+        return values
     
     @field_validator("deathday")
     def validate_borrowed_amount(cls, value, info):

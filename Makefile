@@ -1,4 +1,8 @@
+DC = docker compose
+APP_FILE = docker_compose/docker-compose-local.yaml
+
+
 up:
-	docker compose -f docker-compose-local.yaml up -d
+	${DC} -f ${APP_FILE} up -d
 down:
-	docker compose -f docker-compose-local.yaml down && docker network prune --force
+	${DC}  -f ${APP_FILE} down && docker network prune --force

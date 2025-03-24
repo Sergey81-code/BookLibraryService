@@ -24,18 +24,16 @@ class BaseRepository(Generic[T]):
         result = await session.execute(select(self.model).where(self.model.id == obj_id))
         return result.scalars().first()
     
-    async def delete_by_id(self, session: AsyncSession, obj_id: ObjID) -> ObjID | None:
-        obj = await self.get_by_id(session, obj_id)
-        if obj:
-            stmt = (
-                delete(self.model)
-                .where(self.model.id==obj_id)
-                .returning(self.model.id)
-            )
-            result = await session.execute(stmt)
-            await session.commit()
-            return result.scalar()
-        return None
+    async def delete_objects_by_ids(self, session: AsyncSession, obj_ids: list[ObjID]) -> list[ObjID] | None:
+        stmt = (
+            delete(self.model)
+            .where(self.model.id.in_(obj_ids))
+            .returning(self.model.id)
+        )
+        result = await session.execute(stmt)
+        await session.commit()
+        deleted_ids = result.scalars().all()
+        return deleted_ids if deleted_ids else None
     
     async def get_all(
             self,

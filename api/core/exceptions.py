@@ -1,25 +1,39 @@
-
 from fastapi import HTTPException
 
 
 class AppExceptions:
 
     @staticmethod
-    def bad_request_exception(message: str):
+    def _raise_exception(status_code: int, message: str):
+        raise HTTPException(status_code=status_code, detail=message)
+
+    @classmethod
+    def bad_request_exception(cls, message: str):
         """Raise HTTPException with status_code 400 and message"""
-        raise HTTPException(status_code=400, detail=message)
+        cls._raise_exception(400, message)
+
+    @classmethod
+    def unauthorized_exception(cls, message: str):
+        """Raise HTTPException with status_code 401 and message"""
+        cls._raise_exception(401, message)
+
+    @classmethod
+    def forbidden_exception(cls, message: str = "Forbidden."):
+        """Raise HTTPException with status_code 403 and message"""
+        cls._raise_exception(403, message)
+
     
-    @staticmethod
-    def not_found_exception(message: str):
+    @classmethod
+    def not_found_exception(cls, message: str):
         """Raise HTTPException with status_code 404 and message"""
-        raise HTTPException(status_code=404, detail=message)
+        cls._raise_exception(404, message)
     
-    @staticmethod
-    def validation_exception(message: str):
+    @classmethod
+    def validation_exception(cls, message: str):
         """Raise HTTPException with status_code 422 and message"""
-        raise HTTPException(status_code=422, detail=message)
+        cls._raise_exception(422, message)
     
-    @staticmethod
-    def service_unavailable_exception(message: str):
+    @classmethod
+    def service_unavailable_exception(cls, message: str):
         """Raise HTTPException with status_code 503 and message"""
-        raise HTTPException(status_code=503, detail=message)
+        cls._raise_exception(503, message)

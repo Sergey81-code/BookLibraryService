@@ -12,11 +12,15 @@ ASYNC_REAL_DATABASE_URL = env.str(
     default="postgresql+asyncpg://postgres:postgres@localhost:5431/postgres"
 )
 
+# TEST_DATABASE_URL = env.str(
+#     "TEST_DATABASE_URL",
+#     default="postgresql+asyncpg://postgres_test:postgres_test@host.docker.internal:5429/postgres_test",
+# )
+
 TEST_DATABASE_URL = env.str(
     "TEST_DATABASE_URL",
-    default="postgresql+asyncpg://postgres_test:postgres_test@host.docker.internal:5433/postgres_test",
+    default="postgresql+asyncpg://postgres_test:postgres_test@localhost:5429/postgres_test",
 )
-
 SECRET_KEY_FOR_ACCESS: str = env.str(
     "SECRET_KEY_FOR_ACCESS", default="your-strong-access-secret-key"
 )

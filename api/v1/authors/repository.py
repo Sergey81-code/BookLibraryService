@@ -15,7 +15,7 @@ class AuthorRepository(BaseRepository[Author]):
         return book_row[0] if book_row else None
     
 
-    async def update_books_in_authors(
+    async def update_books_in_author(
             self, 
             session: AsyncSession,
             author: Author, 
@@ -24,7 +24,7 @@ class AuthorRepository(BaseRepository[Author]):
         ) -> Author:
 
         for book in books_to_add:
-            author.books.append()
+            author.books.append(book)
         
         for book in books_to_remove:
             author.books.remove(book)

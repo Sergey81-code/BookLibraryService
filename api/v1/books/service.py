@@ -1,23 +1,28 @@
 from uuid import UUID
+from api.core.base_service import BaseService
 from api.core.exceptions import AppExceptions
 from api.v1.authors.repository import AuthorRepository
 from api.v1.books.repository import BookRepository
 from api.v1.books.schemas import Author, BookCreate, BookUpdate
 from db.models import Book
+from db.models import Author as Author_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 auth_repo = AuthorRepository()
 
-class BookService:
+class BookService(BaseService[Book]):
 
     def __init__(self, repo: BookRepository):
-        self.repo = repo
+        super().__init__(repo)
 
-    async def _get_only_existing_authors(self, authors: list[Author], session: AsyncSession) -> list[Author] | list:
-        existing_authors = await auth_repo.get_all(session)
-        existing_authors_ids = [author.id for author in existing_authors]
-        return [author for author in authors if author.id in existing_authors_ids]
+    async def _get_only_existing_authors(self, authors: list[Author], session: AsyncSession) -> list[Author_db] | list:
+        received_author_ids = [author.id for author in authors]
+        return await auth_repo.get_all(
+            session, 
+            [lambda model: model.id.in_(received_author_ids)],
+        )
+    
     
     async def _check_book_exist(self, bookName: str, session: AsyncSession) -> bool:
         existing_book = await self.repo.get_book_by_name(session, bookName)
@@ -27,9 +32,10 @@ class BookService:
 
 
     async def create_book_orm_obj(self, body_with_book_info: BookCreate, session: AsyncSession) -> Book:
-        if body_with_book_info.authors:
-            body_with_book_info.authors = await self._get_only_existing_authors(body_with_book_info.authors, session)
-        return Book(**body_with_book_info.model_dump(exclude_none=True))
+        authors = await self._get_only_existing_authors(body_with_book_info.authors, session)
+        if authors:
+            return Book(**body_with_book_info.model_dump(exclude={"authors"}, exclude_none=True), authors=authors)
+        AppExceptions.bad_request_exception("At least one valid author must be provided to create a book.")
 
 
     async def create_book_in_database(self, book: Book, session: AsyncSession) -> Book:
@@ -48,16 +54,18 @@ class BookService:
         return book
     
 
-    async def delete_book_by_id(self, book_id: UUID, session: AsyncSession) -> Book:
-        await self.get_book_by_id(book_id, session)
-        return await self.repo.delete_by_id(session, book_id)
+    async def delete_books_by_ids(self, book_ids: list[UUID], session: AsyncSession) -> Book:
+        books = await self._get_only_existing_objects(book_ids, session)
+        return await self.repo.delete_objects_by_ids(session, books)
     
     async def update_authors_into_book(self, book: Book, authors: list[Author], session: AsyncSession) -> Book:
-        authors = await self._get_only_existing_authors(authors)
-        author_ids = [author.id for author in authors]
-        authors_from_db = await auth_repo.get_all(session, [lambda model: model.id.in_(author_ids)])
-        authors_to_add = set(authors_from_db) - book.authors
-        authors_to_remove = book.authors - set(authors_from_db)
+        authors: list[Author_db] = await self._get_only_existing_authors(authors, session)
+
+        existing_authors_id = {author.id for author in book.authors}
+        new_authors_id = {author.id for author in authors}
+
+        authors_to_add = [author for author in authors if author.id not in existing_authors_id]
+        authors_to_remove = [author for author in book.authors if author.id not in new_authors_id]
 
         return await self.repo.update_authors_into_book(session, book, authors_to_add, authors_to_remove)
     
@@ -71,9 +79,9 @@ class BookService:
                 AppExceptions.validation_exception(
                     "At least one parameter for book update info should be proveded"
                 )
-            if updated_book_params['authors']:
-                book = self.update_authors_into_book(book, updated_book_params['authors'], session)
-            del updated_book_params['authors']
+            if authors := updated_book_params.get('authors'):
+                book = await self.update_authors_into_book(book, authors, session)
+            updated_book_params.pop("authors", None)
             return await self.repo.update_obj(session, book, updated_book_params)
         except IntegrityError:
             AppExceptions.service_unavailable_exception(f"Database error.")

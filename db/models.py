@@ -8,7 +8,6 @@ from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 from typing import Annotated
 from db.session import sync_engine
 
-# Создайте объект MetaData
 metadata = MetaData()
 
 # Определите таблицу users без модели
@@ -33,7 +32,7 @@ class Book(Base):
 
     id: Mapped[uuid_pk]
     name: Mapped[str]
-    desc: Mapped[str | None]
+    description: Mapped[str | None]
     url: Mapped[str | None]
     year: Mapped[int]
     totalAmount: Mapped[int]

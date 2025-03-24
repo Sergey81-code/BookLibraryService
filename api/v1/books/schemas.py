@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -11,30 +12,37 @@ class TundeModel(BaseModel):
 class Author(BaseModel):
     id: UUID
 
+class ShowAuthor(TundeModel):
+    id: UUID
+    birthday: datetime.date | None = None
+    name: str
+    deathday: datetime.date | None = None
+
+
 class ShowBook(TundeModel):
     id: UUID
     name: str
-    desc: Optional[str] = None
+    description: Optional[str] = None
     url: Optional[str] = None
     year: int
     totalAmount: int
     borrowedAmount: int
-    authors: list[Author]
+    authors: list[ShowAuthor]
 
 
 class BookCreate(BaseModel):
     name: str
-    desc: Optional[str] = None
+    description: Optional[str] = None
     url: Optional[str] = None
     year: int
     totalAmount: int = Field(gt=0, description="Total amount must be greater than 0")
     borrowedAmount: int = Field(ge=0, description="Borrowed amount must be non-negative")
-    authors: list[Author] = []
+    authors: list[Author]
 
     @model_validator(mode="before")
     def capitalize_name(cls, values):
         if "name" in values:
-            values['name'] = values['name'].capitalize()
+            values['name'] = values['name'][0].upper() + values['name'][1:]
         return values
         
 
@@ -42,25 +50,24 @@ class BookCreate(BaseModel):
     def validate_borrowed_amount(cls, value, info):
         total_amount = info.data.get('totalAmount')
         if total_amount is not None and value > total_amount:
-            AppExceptions.bad_request_exception("borrowedAmount cannot be greater than totalAmount")
+            AppExceptions.validation_exception("borrowedAmount cannot be greater than totalAmount")
         return value
 
 
 class BookUpdate(BaseModel):
     name: Optional[str] = None
-    desc: Optional[str] = None
+    description: Optional[str] = None
     url: Optional[str] = None
     year: Optional[int] = None
     totalAmount: Optional[int] = Field(None, gt=0, description="Total amount must be greater than 0")
     borrowedAmount: Optional[int] = Field(None, ge=0, description="Borrowed amount must be non-negative")
-    authors: Optional[list[Author]] = []
+    authors: Optional[list[Author]] = None
 
     @model_validator(mode="before")
     def capitalize_name(cls, values):
         if "name" in values:
-            values['name'] = values['name'].capitalize()
+            values['name'] = values['name'][0].upper() + values['name'][1:]
         return values
-        
 
 
     @field_validator("borrowedAmount")
@@ -69,3 +76,4 @@ class BookUpdate(BaseModel):
         if total_amount is not None and value > total_amount:
             AppExceptions.bad_request_exception("borrowedAmount cannot be greater than totalAmount")
         return value
+    
