@@ -32,7 +32,7 @@ def upgrade() -> None:
     op.create_table('books',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('desc', sa.String(), nullable=True),
+    sa.Column('description', sa.String(), nullable=True),
     sa.Column('url', sa.String(), nullable=True),
     sa.Column('year', sa.Integer(), nullable=False),
     sa.Column('totalAmount', sa.Integer(), nullable=False),

@@ -42,6 +42,9 @@ async def update_book_by_id(
         body: BookUpdate,
         session: AsyncSession = Depends(get_session),
         book_service: BookService = Depends(get_book_service),
+        _ = Depends(partial(role_required, 
+                    [PortalRole.ROLE_PORTAL_ADMIN, PortalRole.ROLE_PORTAL_SUPERADMIN])
+                ),
     ) -> ShowBook: 
     book = await book_service.get_book_by_id(book_id, session)
     return await book_service.update_book(book, body, session)
@@ -53,6 +56,9 @@ async def delete_books(
         book_ids: list[UUID],
         session: AsyncSession = Depends(get_session),
         book_service: BookService = Depends(get_book_service),
+        _ = Depends(partial(role_required, 
+                [PortalRole.ROLE_PORTAL_ADMIN, PortalRole.ROLE_PORTAL_SUPERADMIN])
+            ),
     ) -> list[UUID]:
     return await book_service.delete_books_by_ids(book_ids, session)
 

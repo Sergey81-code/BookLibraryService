@@ -32,14 +32,14 @@ class TestDAL:
         
         
     
-    async def create_object_in_database(self, tablename: str, obj: dict) -> UUID | None:
-        columns = ", ".join(obj.keys())
+    async def create_object_in_database(self, tablename: str, obj: dict, field_to_return: str = "id") -> str | None:
+        columns = "\"" + "\", \"".join(obj.keys()) + "\""
         value_placeholders = ", ".join([f"${i+1}" for i in range(len(obj))])
         values = tuple(obj.values())
         query = f"""
             INSERT INTO {tablename} ({columns})
             VALUES ({value_placeholders})
-            RETURNING id
+            RETURNING {field_to_return}
         """
         async with self.pool.acquire() as connection:
             return await connection.fetchval(query, *values)

@@ -16,8 +16,13 @@ class BookService(BaseService[Book]):
     def __init__(self, repo: BookRepository):
         super().__init__(repo)
 
-    async def _get_only_existing_authors(self, authors: list[Author], session: AsyncSession) -> list[Author_db] | list:
-        received_author_ids = [author.id for author in authors]
+    async def _get_only_existing_authors(self, authors: list[Author] | list[dict[str, str]], session: AsyncSession) -> list[Author_db] | list:
+        received_author_ids = []
+        for author in authors:
+            if isinstance(author, dict):
+                received_author_ids.append(author["id"])
+            else:
+                received_author_ids.append(author.id)
         return await auth_repo.get_all(
             session, 
             [lambda model: model.id.in_(received_author_ids)],
@@ -55,10 +60,15 @@ class BookService(BaseService[Book]):
     
 
     async def delete_books_by_ids(self, book_ids: list[UUID], session: AsyncSession) -> Book:
+        if not book_ids:
+            AppExceptions.validation_exception("List of book IDs cannot be empty")
         books = await self._get_only_existing_objects(book_ids, session)
-        return await self.repo.delete_objects_by_ids(session, books)
+        if not books:
+            AppExceptions.not_found_exception("The books with your IDs are not found.")
+        existing_books_ids = [book.id for book in books]
+        return await self.repo.delete_objects_by_ids(session, existing_books_ids)
     
-    async def update_authors_into_book(self, book: Book, authors: list[Author], session: AsyncSession) -> Book:
+    async def update_authors_into_book(self, book: Book, authors: list[Author] | list[dict[str, str]], session: AsyncSession) -> Book:
         authors: list[Author_db] = await self._get_only_existing_authors(authors, session)
 
         existing_authors_id = {author.id for author in book.authors}
@@ -74,14 +84,22 @@ class BookService(BaseService[Book]):
         try:
             if book.name != body_with_updated_book_params.name and await self._check_book_exist(body_with_updated_book_params.name, session):
                 AppExceptions.bad_request_exception(f"Book name {body_with_updated_book_params.name} already taken")
+            
             updated_book_params = body_with_updated_book_params.model_dump(exclude_none=True)
+
+            if authors := updated_book_params.get('authors'):
+                book = await self.update_authors_into_book(book, authors, session)
+                if not book.authors:
+                    AppExceptions.bad_request_exception("At least one valid author must be provided to create a book.")
+
+            updated_book_params.pop("authors", None)
+
             if not updated_book_params:
                 AppExceptions.validation_exception(
                     "At least one parameter for book update info should be proveded"
                 )
-            if authors := updated_book_params.get('authors'):
-                book = await self.update_authors_into_book(book, authors, session)
-            updated_book_params.pop("authors", None)
+
             return await self.repo.update_obj(session, book, updated_book_params)
+        
         except IntegrityError:
             AppExceptions.service_unavailable_exception(f"Database error.")

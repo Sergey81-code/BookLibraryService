@@ -101,19 +101,7 @@ async def asyncpg_pool():
 
 
 @pytest.fixture
-async def create_object_in_database(asyncpg_pool: asyncpg.Pool) -> Callable[[str, dict], UUID | None]:
-    async def create_object_in_database(tablename: str, obj: dict) -> UUID | None:
-        return await TestDAL(asyncpg_pool).create_object_in_database(tablename, obj)
-    return create_object_in_database
-
-@pytest.fixture
-async def get_obj_from_database(asyncpg_pool: asyncpg.Pool) -> Callable[[str, UUID], asyncpg.Record | None]:
-    async def get_obj_from_database_by_id(tablename: str, obj_id: UUID) -> asyncpg.Record | None:
-        return await TestDAL(asyncpg_pool).get_obj_from_database_by_id(tablename, obj_id)
-    return get_obj_from_database_by_id
-
-@pytest.fixture
-async def get_book_from_database(asyncpg_pool: asyncpg.Pool) -> Callable[[str, dict], asyncpg.Record | None]:
+async def get_book_from_database(asyncpg_pool: asyncpg.Pool) -> Callable[[UUID], asyncpg.Record | None]:
     async def get_book_from_database_by_id(obj_id: UUID) -> asyncpg.Record | None:
         dal = TestDAL(asyncpg_pool)
         book = await dal.get_obj_from_database_by_id("books", obj_id)
@@ -127,3 +115,34 @@ async def get_book_from_database(asyncpg_pool: asyncpg.Pool) -> Callable[[str, d
         return book
     
     return get_book_from_database_by_id
+
+
+@pytest.fixture
+async def create_author_in_database(asyncpg_pool: asyncpg.Pool) -> Callable[[dict[str | list[dict[str]]]], str]:
+    async def create_author_in_database(author_info) -> str:
+        dal = TestDAL(asyncpg_pool)
+        books: list[dict[str]] = author_info.pop("books", [])
+        author_id = await dal.create_object_in_database("authors", author_info)
+        for book in books:
+            await dal.create_object_in_database("book_authors", {"book_id": book["id"], "author_id": author_id})
+        return author_id
+    return create_author_in_database
+
+
+@pytest.fixture
+async def create_book_in_database(asyncpg_pool: asyncpg.Pool) -> Callable[[dict[str | list[dict[str]]]], str]:
+    async def create_book_in_database(book_info) -> str:
+        dal = TestDAL(asyncpg_pool)
+        authors: list[dict[str]] = book_info.pop("authors", [])
+        book_id = await dal.create_object_in_database("books", book_info)
+        for author in authors:
+            await dal.create_object_in_database(
+                "book_authors", 
+                {
+                    "book_id": book_id, 
+                    "author_id": author["id"]
+                },
+                "book_id"
+            )
+        return book_id
+    return create_book_in_database

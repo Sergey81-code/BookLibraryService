@@ -11,7 +11,7 @@ from utils.roles import PortalRole
 
 async def test_create_book(
         client, 
-        create_object_in_database, 
+        create_author_in_database, 
         get_book_from_database
     ):
     author1_info = {
@@ -36,8 +36,8 @@ async def test_create_book(
         "authors": []
     }
 
-    author1_id = await create_object_in_database("authors", author1_info)
-    author2_id = await create_object_in_database("authors", author2_info)
+    author1_id = await create_author_in_database(author1_info)
+    author2_id = await create_author_in_database(author2_info)
     book_info['authors'].append({'id': str(author1_id)})
     book_info['authors'].append({'id': str(author2_id)})
 
@@ -71,9 +71,66 @@ async def test_create_book(
     assert [{"id": str(author["author_id"])} for author in book_from_db["authors"]] == book_info["authors"]
 
 
+async def test_create_book_duplicate_name(
+        client, 
+        create_author_in_database, 
+        create_book_in_database
+    ):
+    author1_info = {
+        "id": uuid7(),
+        "name": "Толстой Лев Николаевич",
+        "birthday": datetime.date(1855, 4, 22),
+        "deathday": datetime.date(1999, 6, 12)
+    }
+    author2_info = {
+        "id": uuid7(),
+        "name": "Лермонтов Михаил",
+        "birthday": datetime.date(1845, 7, 2),
+        "deathday": datetime.date(1989, 3, 18)
+    }
+    book_info = {
+        "id": uuid7(),
+        "name": "BookName",
+        "description": "Descriptions of this book.",
+        "url": "https://archive.org/stream/aliceinwonderlan00carriala#15",
+        "year": 2003,
+        "totalAmount": 10,
+        "borrowedAmount": 0,
+        "authors": []
+    }
+
+    book_info_same_name = {
+        "name": "BookName",
+        "description": "Descriptions of this book.111",
+        "url": "https://archive.org/stream/aliceinwonderlan00carriala#151111",
+        "year": 2010,
+        "totalAmount": 12,
+        "borrowedAmount": 3,
+        "authors": []
+    }
+
+    author1_id = await create_author_in_database(author1_info)
+    author2_id = await create_author_in_database(author2_info)
+    book_info['authors'].append({'id': str(author1_id)})
+    book_info['authors'].append({'id': str(author2_id)})
+    book_info_same_name['authors'].append({'id': str(author1_id)})
+    book_info_same_name['authors'].append({'id': str(author2_id)})
+
+    await create_book_in_database(book_info)
+
+    resp = client.post(
+        f"{VERSION_URL}{BOOK_URL}", json=book_info_same_name,
+        headers=await create_auth_headers_for_user([PortalRole.ROLE_PORTAL_ADMIN]),
+    )
+
+    assert resp.status_code == 400
+    assert resp.json() == {"detail": "Book with name BookName already exists."}
+
+
+
 async def test_create_book_not_authenticated(
         client, 
-        create_object_in_database
+        create_author_in_database
     ):
     author1_info = {
         "id": uuid7(),
@@ -97,8 +154,8 @@ async def test_create_book_not_authenticated(
         "authors": []
     }
 
-    author1_id = await create_object_in_database("authors", author1_info)
-    author2_id = await create_object_in_database("authors", author2_info)
+    author1_id = await create_author_in_database(author1_info)
+    author2_id = await create_author_in_database(author2_info)
     book_info['authors'].append({'id': str(author1_id)})
     book_info['authors'].append({'id': str(author2_id)})
 
@@ -113,7 +170,7 @@ async def test_create_book_not_authenticated(
 
 async def test_create_book_unauth(
         client, 
-        create_object_in_database
+        create_author_in_database
     ):
     author1_info = {
         "id": uuid7(),
@@ -137,8 +194,8 @@ async def test_create_book_unauth(
         "authors": []
     }
 
-    author1_id = await create_object_in_database("authors", author1_info)
-    author2_id = await create_object_in_database("authors", author2_info)
+    author1_id = await create_author_in_database(author1_info)
+    author2_id = await create_author_in_database(author2_info)
     book_info['authors'].append({'id': str(author1_id)})
     book_info['authors'].append({'id': str(author2_id)})
     auth_header = await create_auth_headers_for_user([PortalRole.ROLE_PORTAL_ADMIN])
@@ -156,7 +213,7 @@ async def test_create_book_unauth(
 
 async def test_create_book_no_privilage(
         client, 
-        create_object_in_database
+        create_author_in_database
     ):
     author1_info = {
         "id": uuid7(),
@@ -180,8 +237,8 @@ async def test_create_book_no_privilage(
         "authors": []
     }
 
-    author1_id = await create_object_in_database("authors", author1_info)
-    author2_id = await create_object_in_database("authors", author2_info)
+    author1_id = await create_author_in_database(author1_info)
+    author2_id = await create_author_in_database(author2_info)
     book_info['authors'].append({'id': str(author1_id)})
     book_info['authors'].append({'id': str(author2_id)})
 
@@ -197,7 +254,7 @@ async def test_create_book_no_privilage(
 
 async def test_create_book_bad_cred(
         client, 
-        create_object_in_database
+        create_author_in_database
     ):
     author1_info = {
         "id": uuid7(),
@@ -221,8 +278,8 @@ async def test_create_book_bad_cred(
         "authors": []
     }
 
-    author1_id = await create_object_in_database("authors", author1_info)
-    author2_id = await create_object_in_database("authors", author2_info)
+    author1_id = await create_author_in_database(author1_info)
+    author2_id = await create_author_in_database(author2_info)
     book_info['authors'].append({'id': str(author1_id)})
     book_info['authors'].append({'id': str(author2_id)})
 
@@ -300,16 +357,18 @@ async def test_create_book_bad_cred(
             ),
             (
                 {
-                    "descriptionv": "string",
+                    "description": "string",
                     "url": "string",
                     "year": 0,
                     "totalAmount": 1,
                     "borrowedAmount": 0,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                  422,
@@ -329,15 +388,17 @@ async def test_create_book_bad_cred(
                         "totalAmount": 1,
                         "borrowedAmount": 0,
                         "authors": [
-                        {
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                            },
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                            },
                         ]
                     }
                     }
                 ]
-                },
+                }
             ),
             (
                 {
@@ -347,9 +408,11 @@ async def test_create_book_bad_cred(
                     "borrowedAmount": 0,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                  422,
@@ -368,10 +431,12 @@ async def test_create_book_bad_cred(
                         "totalAmount": 1,
                         "borrowedAmount": 0,
                         "authors": [
-                        {
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                            },
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                            },
                         ]
                     }
                     }
@@ -386,9 +451,11 @@ async def test_create_book_bad_cred(
                     "borrowedAmount": 0,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                  422,
@@ -407,10 +474,12 @@ async def test_create_book_bad_cred(
                         "year": 2003,
                         "borrowedAmount": 0,
                         "authors": [
-                        {
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                            },
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                            },
                         ]
                     }
                     }
@@ -425,9 +494,11 @@ async def test_create_book_bad_cred(
                     "totalAmount": 1,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                  422,
@@ -446,10 +517,12 @@ async def test_create_book_bad_cred(
                         "year": 2003,
                         "totalAmount": 1,
                         "authors": [
-                        {
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                            },
+                            {
+                                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                            },
                         ]
                     }
                     }
@@ -494,9 +567,11 @@ async def test_create_book_bad_cred(
                     "borrowedAmount": 0,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                  422,
@@ -526,9 +601,11 @@ async def test_create_book_bad_cred(
                     "borrowedAmount": -2,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                  422,
@@ -558,9 +635,11 @@ async def test_create_book_bad_cred(
                     "borrowedAmount": 2,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                 422,
@@ -610,9 +689,11 @@ async def test_create_book_bad_cred(
                     "borrowedAmount": 0,
                     "authors": [
                         {
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                        "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
-                        }
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        },
+                        {
+                            "id": "3fa85f64-5717-4562-b3fc-2c963f66afa5"
+                        },
                     ]
                 },
                 400,

@@ -74,6 +74,6 @@ class BookUpdate(BaseModel):
     def validate_borrowed_amount(cls, value, values):
         total_amount = values.data.get('totalAmount')
         if total_amount is not None and value > total_amount:
-            AppExceptions.bad_request_exception("borrowedAmount cannot be greater than totalAmount")
+            AppExceptions.validation_exception("borrowedAmount cannot be greater than totalAmount")
         return value
     
