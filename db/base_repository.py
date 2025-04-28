@@ -11,43 +11,44 @@ T = TypeVar("T")
 ObjID = UUID | str | int
 
 class BaseRepository(Generic[T]):
-    def __init__(self, model: Type[T]):
+    def __init__(self, model: Type[T], session: AsyncSession):
         self.model = model
+        self.session = session
+
     
-    async def add(self, session: AsyncSession, obj_in: T) -> T:
-        session.add(obj_in)
-        await session.commit()
-        await session.refresh(obj_in)
+    async def add(self, obj_in: T) -> T:
+        self.session.add(obj_in)
+        await self.session.commit()
+        await self.session.refresh(obj_in)
         return obj_in
     
-    async def get_by_id(self, session: AsyncSession, obj_id: ObjID) -> T | None:
-        result = await session.execute(select(self.model).where(self.model.id == obj_id))
+    async def get_by_id(self, obj_id: ObjID) -> T | None:
+        result = await self.session.execute(select(self.model).where(self.model.id == obj_id))
         return result.scalars().first()
     
-    async def delete_objects_by_ids(self, session: AsyncSession, obj_ids: list[ObjID]) -> list[ObjID] | None:
+    async def delete_objects_by_ids(self, obj_ids: list[ObjID]) -> list[ObjID] | None:
         stmt = (
             delete(self.model)
             .where(self.model.id.in_(obj_ids))
             .returning(self.model.id)
         )
-        result = await session.execute(stmt)
-        await session.commit()
+        result = await self.session.execute(stmt)
+        await self.session.commit()
         deleted_ids = result.scalars().all()
         return deleted_ids if deleted_ids else None
     
     async def get_all(
             self,
-            session: AsyncSession,
             object_filters: list[Callable[[Type[DeclarativeBase]], BinaryExpression]] | None = None
         ):
         stmt = select(self.model)
         if object_filters:
             for object_filter in object_filters:
                 stmt = stmt.where(object_filter(self.model))
-        results = await session.execute(stmt)
+        results = await self.session.execute(stmt)
         return results.scalars().all()
     
-    async def update_obj(self, session: AsyncSession, obj: T, updated_params: dict[str, Any]) -> T:
+    async def update_obj(self, obj: T, updated_params: dict[str, Any]) -> T:
         query = (
             update(self.model)
             .where(self.model.id == obj.id)
@@ -56,9 +57,9 @@ class BaseRepository(Generic[T]):
         )
         
             
-        res = await session.execute(query)
-        await session.commit()
+        res = await self.session.execute(query)
+        await self.session.commit()
         updated_obj = res.scalars().first()
-        await session.refresh(updated_obj)
+        await self.session.refresh(updated_obj)
         return updated_obj
 

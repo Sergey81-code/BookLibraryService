@@ -7,6 +7,8 @@ from uuid_extensions import uuid7
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 from typing import Annotated
 from db.session import sync_engine
+from utils.book_conditions import BookConditions
+from utils.book_statuses import BookStatuses
 
 metadata = MetaData()
 
@@ -17,15 +19,8 @@ Base = declarative_base()
 
 uuid_pk = Annotated[uuid.UUID, mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)]
 
-class BookStatuses(enum.StrEnum):
-    AVAILABLE = "available"
-    BORROWED = "borrowed"
-    RESERVED = "reserved"
 
-class BookConditions(enum.StrEnum):
-    NEW = "new"
-    USED = "used"
-    DAMAGED = "damaged"
+
 
 class Book(Base):
     __tablename__ = "books"

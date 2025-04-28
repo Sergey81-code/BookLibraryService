@@ -15,4 +15,6 @@ async_engine = create_async_engine(settings.ASYNC_REAL_DATABASE_URL, future=True
 
 async_session = sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
 
-
+async def get_session():
+    async with async_session() as session:
+        yield session

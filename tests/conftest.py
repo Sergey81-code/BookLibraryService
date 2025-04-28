@@ -13,7 +13,7 @@ from alembic.config import Config
 from fastapi.testclient import TestClient
 
 from api.core.config import get_settings
-from api.core.dependencies import get_session
+from db.session import get_session
 from main import app
 from tests.sql_queries import QUERY_TO_DELETE_PROCESSES_PG, QUERY_TO_UNBLOCKING_PROCCESS_PG
 from tests.testDAL import TestDAL
@@ -98,6 +98,14 @@ async def asyncpg_pool():
     )
     yield pool
     await pool.close()
+
+
+@pytest.fixture
+async def get_project_settings():
+    async def _get_project_settings():
+        settings = get_settings()
+        return settings
+    return _get_project_settings
 
 
 @pytest.fixture

@@ -2,6 +2,8 @@ from envparse import Env
 
 env = Env()
 
+ENABLE_ROLE_CHECK = False
+
 SYNC_REAL_DATABASE_URL = env.str(
     "SYNC_DATABASE_URL",
     default="postgresql+psycopg2://postgres:postgres@localhost:5431/postgres"

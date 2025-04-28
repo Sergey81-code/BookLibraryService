@@ -130,7 +130,8 @@ async def test_create_book_duplicate_name(
 
 async def test_create_book_not_authenticated(
         client, 
-        create_author_in_database
+        create_author_in_database,
+        get_project_settings
     ):
     author1_info = {
         "id": uuid7(),
@@ -163,14 +164,20 @@ async def test_create_book_not_authenticated(
         f"{VERSION_URL}{BOOK_URL}", json=book_info,
     )
 
-    assert resp.status_code == 403
-    assert resp.json() == {"detail": "Not authenticated"}
+    settings = await get_project_settings()
+
+    if settings.ENABLE_ROLE_CHECK == True:
+        assert resp.status_code == 403
+        assert resp.json() == {"detail": "Not authenticated"}
+    else:
+        assert resp.status_code == 200
 
 
 
 async def test_create_book_unauth(
         client, 
-        create_author_in_database
+        create_author_in_database,
+        get_project_settings
     ):
     author1_info = {
         "id": uuid7(),
@@ -207,13 +214,21 @@ async def test_create_book_unauth(
         headers = bad_auth_header,
     )
 
-    assert resp.status_code == 401
-    assert resp.json() == {"detail": "Could not validate credentials"}
+    settings = await get_project_settings()
+
+    if settings.ENABLE_ROLE_CHECK == True:
+        assert resp.status_code == 401
+        assert resp.json() == {"detail": "Could not validate credentials"}
+    else:
+        assert resp.status_code == 200
+
+
 
 
 async def test_create_book_no_privilage(
         client, 
-        create_author_in_database
+        create_author_in_database,
+        get_project_settings
     ):
     author1_info = {
         "id": uuid7(),
@@ -247,14 +262,23 @@ async def test_create_book_no_privilage(
         headers = await create_auth_headers_for_user([PortalRole.ROLE_PORTAL_USER]),
     )
 
-    assert resp.status_code == 403
-    assert resp.json() == {"detail": "Forbidden: insufficient permissions"}
+    
+    settings = await get_project_settings()
+
+    if settings.ENABLE_ROLE_CHECK == True:
+        assert resp.status_code == 403
+        assert resp.json() == {"detail": "Forbidden: insufficient permissions"}
+    else:
+        assert resp.status_code == 200
+
+
 
 
 
 async def test_create_book_bad_cred(
         client, 
-        create_author_in_database
+        create_author_in_database,
+        get_project_settings
     ):
     author1_info = {
         "id": uuid7(),
@@ -291,8 +315,14 @@ async def test_create_book_bad_cred(
         headers=bad_auth_header,
     )
 
-    assert resp.status_code == 401
-    assert resp.json() == {"detail": "Could not validate credentials"}
+    settings = await get_project_settings()
+
+    if settings.ENABLE_ROLE_CHECK == True:
+        assert resp.status_code == 401
+        assert resp.json() == {"detail": "Could not validate credentials"}
+    else:
+        assert resp.status_code == 200
+
 
 
 

@@ -6,18 +6,17 @@ from db.models import Author, Book
 
 
 class AuthorRepository(BaseRepository[Author]):
-    def __init__(self):
-        super().__init__(Author)
+    def __init__(self, session: AsyncSession):
+        super().__init__(Author, session)
 
-    async def get_author_by_name(self, authorName: str, session: AsyncSession) -> Author | None:
-        result = await session.execute(select(self.model).where(self.model.name == authorName).limit(1))
+    async def get_author_by_name(self, authorName: str) -> Author | None:
+        result = await self.session.execute(select(self.model).where(self.model.name == authorName).limit(1))
         book_row = result.first()
         return book_row[0] if book_row else None
     
 
     async def update_books_in_author(
             self, 
-            session: AsyncSession,
             author: Author, 
             books_to_add: list[Book], 
             books_to_remove: list[Book]
@@ -29,6 +28,6 @@ class AuthorRepository(BaseRepository[Author]):
         for book in books_to_remove:
             author.books.remove(book)
 
-        await session.commit()
-        await session.refresh(author)
+        await self.session.commit()
+        await self.session.refresh(author)
         return author

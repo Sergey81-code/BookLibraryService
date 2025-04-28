@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     SECRET_KEY_FOR_ACCESS: str = settings.SECRET_KEY_FOR_ACCESS
     ALGORITHM: str = settings.ALGORITHM
 
+    ENABLE_ROLE_CHECK: bool = settings.ENABLE_ROLE_CHECK
+
 @lru_cache()
 def get_settings():
     return Settings()
