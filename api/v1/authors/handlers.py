@@ -11,7 +11,7 @@ from utils.roles import PortalRole
 
 author_router = APIRouter()
 
-@author_router.get('/', response_model=ShowAuthor)
+@author_router.get('/{author_id}', response_model=ShowAuthor)
 async def get_author(
         author_id: UUID,
         author_service: AuthorService = Depends(get_author_service),
@@ -55,3 +55,12 @@ async def delete_author(
     author_service: AuthorService = Depends(get_author_service),
 ) -> UUID:
     return await author_service.delete_author_by_id(author_id)
+
+
+
+@author_router.get("/", response_model=ShowAuthor)
+async def get_authors_by_name(
+    author_name: str,
+    author_service: AuthorService = Depends(get_author_service),
+) -> ShowAuthor:
+    return await author_service.get_author_by_name(author_name)

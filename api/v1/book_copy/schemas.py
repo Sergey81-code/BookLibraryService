@@ -16,16 +16,17 @@ class BookCopy(BaseModel):
     book_id: UUID
     status: BookStatuses
     condition: BookConditions
-    user_id: UUID
+    user_id: UUID | None = None
 
 
 
 class ShowBookCopy(TundeModel):
+    id: UUID
     book_id: UUID
     book_name: str
     status: BookStatuses
     condition: BookConditions
-    user_id: UUID
+    user_id: UUID | None
     description: Optional[str] = None
     url: Optional[str] = None
     year: int
@@ -38,5 +39,13 @@ class CreateBookCopies(BaseModel):
 
 class Delete_book_copies(BaseModel):
     book_copies_id: list[UUID]
+
+
+class UpdateBookCopy(BaseModel):
+    id: UUID
+    book_id: UUID | None = None
+    status: BookStatuses | None = None
+    condition: BookConditions | None = None
+    user_id: UUID | None = None
 
 

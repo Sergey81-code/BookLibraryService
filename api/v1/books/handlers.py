@@ -27,7 +27,7 @@ async def add_book(
     
 
 
-@book_router.get('/', response_model=ShowBook)
+@book_router.get('/{book_id}', response_model=ShowBook)
 async def get_book(
         book_id: UUID,
         book_service: BookService = Depends(get_book_service),
@@ -60,3 +60,10 @@ async def delete_books(
     ) -> list[UUID]:
     return await book_service.delete_books_by_ids(book_ids)
 
+
+@book_router.get('/', response_model=ShowBook)
+async def get_book_by_name(
+    book_name: str,
+    book_service: BookService = Depends(get_book_service),
+) -> ShowBook:
+    return await book_service.get_book_by_name(book_name)

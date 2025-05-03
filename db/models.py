@@ -1,5 +1,4 @@
 import datetime
-import enum
 import uuid
 from sqlalchemy import Enum, ForeignKey, MetaData, Table
 from sqlalchemy.dialects.postgresql import UUID
@@ -46,8 +45,8 @@ class Book_copy(Base):
 
     id: Mapped[uuid_pk]
     book_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(Book.id, ondelete="CASCADE"))
-    status: Mapped[BookStatuses] = mapped_column(Enum(BookStatuses, name='book_statuses_enum'))
-    condition: Mapped[BookConditions] = mapped_column(Enum(BookConditions, name='book_conditions_enum'))
+    status: Mapped[BookStatuses] = mapped_column(Enum(BookStatuses, name='book_statuses_enum', native_enum=True),)
+    condition: Mapped[BookConditions] = mapped_column(Enum(BookConditions, name='book_conditions_enum', native_enum=True))
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey(users_table.c.user_id, use_alter=True, ondelete="SET NULL"))
 
 

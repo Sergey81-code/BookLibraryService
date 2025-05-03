@@ -103,3 +103,10 @@ class BookService(BaseService):
         
         except IntegrityError:
             AppExceptions.service_unavailable_exception(f"Database error.")
+
+    async def get_book_by_name(self, book_name: str) -> Book:
+        book_name = book_name[0].upper() + book_name[1:]
+        book = await self.repo.get_book_by_name(book_name)
+        if book is None:
+            AppExceptions.not_found_exception(f"Book with name {book_name} not found")
+        return book

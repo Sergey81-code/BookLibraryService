@@ -91,4 +91,8 @@ class AuthorService(BaseService):
         await self.repo.get_by_id(author_id)
         return await self.repo.delete_by_id(author_id)
     
-
+    async def get_author_by_name(self, author_name: str) -> list[Author]:
+        author = await self.repo.get_author_by_name(author_name)
+        if author is None:
+            AppExceptions.not_found_exception(f"Author with name {author_name} not found")
+        return author

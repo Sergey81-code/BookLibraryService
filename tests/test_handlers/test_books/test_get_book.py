@@ -48,7 +48,7 @@ async def test_get_book(
     assert book_id == book_info["id"]
 
     resp = client.get(
-        f"{VERSION_URL}{BOOK_URL}/?book_id={book_id}",
+        f"{VERSION_URL}{BOOK_URL}/{book_id}",
     )
 
     assert resp.status_code == 200
@@ -73,19 +73,16 @@ async def test_get_book(
         {
             "detail": [
                 {
-                    "type": "uuid_parsing",
+                    "type": "missing",
                     "loc": [
                         "query",
-                        "book_id"
+                        "book_name"
                     ],
-                    "msg": "Input should be a valid UUID, invalid length: expected length 32 for simple format, found 0",
-                    "input": "",
-                    "ctx": {
-                        "error": "invalid length: expected length 32 for simple format, found 0"
-                    }
+                    "msg": "Field required",
+                    "input": None
                 }
             ]
-        },
+        }
     ),
     (
         "123",
@@ -95,7 +92,7 @@ async def test_get_book(
                 {
                     "type": "uuid_parsing",
                     "loc": [
-                        "query",
+                        "path",
                         "book_id"
                     ],
                     "msg": "Input should be a valid UUID, invalid length: expected length 32 for simple format, found 3",
@@ -105,7 +102,7 @@ async def test_get_book(
                     }
                 }
             ]
-        },
+        }
     ),
     (
         "3fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -154,7 +151,7 @@ async def test_get_book_invalid_id(
     await create_book_in_database(book_info)
 
     resp = client.get(
-        f"{VERSION_URL}{BOOK_URL}/?book_id={book_id}",
+        f"{VERSION_URL}{BOOK_URL}/{book_id}",
     )
 
     assert resp.status_code == expected_status_code
