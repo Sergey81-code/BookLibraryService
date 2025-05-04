@@ -38,3 +38,11 @@ QUERY_TO_DELETE_PROCESSES_PG = """
         AND pid <> pg_backend_pid()
         AND (state = 'idle in transaction' OR wait_event IS NOT NULL);
 """
+
+
+
+CREATE_FAKE_TABLE_OF_USERS = """
+    CREATE TABLE IF NOT EXISTS users (
+        user_id UUID PRIMARY KEY
+    )
+"""

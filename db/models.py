@@ -48,6 +48,7 @@ class Book_copy(Base):
     status: Mapped[BookStatuses] = mapped_column(Enum(BookStatuses, name='book_statuses_enum', native_enum=True),)
     condition: Mapped[BookConditions] = mapped_column(Enum(BookConditions, name='book_conditions_enum', native_enum=True))
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey(users_table.c.user_id, use_alter=True, ondelete="SET NULL"))
+    borrowed_date: Mapped[datetime.date | None]
 
 
 class Author(Base):

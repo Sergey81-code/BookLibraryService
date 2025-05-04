@@ -1,3 +1,4 @@
+import datetime
 from typing import Literal, Optional
 from uuid import UUID
 
@@ -17,6 +18,7 @@ class BookCopy(BaseModel):
     status: BookStatuses
     condition: BookConditions
     user_id: UUID | None = None
+    borrowed_date: datetime.date | None = None
 
 
 
@@ -27,6 +29,7 @@ class ShowBookCopy(TundeModel):
     status: BookStatuses
     condition: BookConditions
     user_id: UUID | None
+    borrowed_date: datetime.date | None = None
     description: Optional[str] = None
     url: Optional[str] = None
     year: int
@@ -47,5 +50,6 @@ class UpdateBookCopy(BaseModel):
     status: BookStatuses | None = None
     condition: BookConditions | None = None
     user_id: UUID | None = None
+    borrowed_date: datetime.date | None = None
 
 

@@ -39,6 +39,7 @@ class BookCopyService(BaseService):
             status=book_copy.status,
             condition=book_copy.condition,
             user_id=book_copy.user_id,
+            borrowed_date=book_copy.borrowed_date,
             book_name=book.name,
             description=book.description,
             url=book.url,

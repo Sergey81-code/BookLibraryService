@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from api.core.config import get_settings
 from db.session import get_session
 from main import app
-from tests.sql_queries import QUERY_TO_DELETE_PROCESSES_PG, QUERY_TO_UNBLOCKING_PROCCESS_PG
+from tests.sql_queries import CREATE_FAKE_TABLE_OF_USERS, QUERY_TO_DELETE_PROCESSES_PG, QUERY_TO_UNBLOCKING_PROCCESS_PG
 from tests.testDAL import TestDAL
 
 
@@ -26,6 +26,7 @@ CLEAN_TABLES = [
     "books",
     "authors",
     "book_copies",
+    "users",
 ]
 
 VERSION_URL = "/v1"
@@ -43,19 +44,29 @@ def event_loop():
 #     loop.close()
 
 
+@pytest.fixture(scope="session")
+async def async_session_test():
+    engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
+    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    yield async_session
+
+
+@pytest.fixture(scope="session")
+async def create_fake_users_table(async_session_test):
+    async with async_session_test() as session:
+                await session.execute(sqlalchemy.text(CREATE_FAKE_TABLE_OF_USERS))
+                await session.commit()
+
+
+
 @pytest.fixture(scope="session", autouse=True)
-async def run_migrations():
+async def run_migrations(create_fake_users_table):
     alembic_ini_path = os.path.join(os.getcwd(), "tests", "alembic.ini")
     alembic_cfg = Config(alembic_ini_path)
 
     command.upgrade(alembic_cfg, "head")
     yield
 
-@pytest.fixture(scope="session")
-async def async_session_test():
-    engine = create_async_engine(settings.TEST_DATABASE_URL, future=True, echo=True)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    yield async_session
 
 @pytest.fixture(scope="function", autouse=True)
 async def clean_tables(async_session_test):
@@ -67,6 +78,7 @@ async def clean_tables(async_session_test):
             await session.execute(
                 sqlalchemy.text(query)
             )
+            await session.commit()
 
 async def _get_test_session():
     test_engine = create_async_engine(
